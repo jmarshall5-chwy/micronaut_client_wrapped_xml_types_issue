@@ -3,6 +3,8 @@ package com.example;
 import com.example.data.NestedItem;
 import com.example.data.Request;
 import com.example.data.Response;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
@@ -22,6 +24,20 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @MicronautTest
 class Xml_wrapperTest {
 
+    static final Request theRequest = Request.builder()
+            .id("1")
+            .nestedItem(List.of(
+                    NestedItem.builder()
+                            .containerId("22")
+                            .someData("something")
+                            .build(),
+                    NestedItem.builder()
+                            .containerId("23")
+                            .someData("something else")
+                            .build()))
+            .build();
+
+
     @Inject
     EmbeddedApplication<?> application;
 
@@ -36,16 +52,22 @@ class Xml_wrapperTest {
 
     @Test
     void doBasicXmlRequest() {
-        MutableHttpRequest<Request> request = HttpRequest.POST("/v1.0/xml/request", Request.builder()
-                .id("1")
-                .nestedItem(List.of(NestedItem.builder()
-                        .containerId("22")
-                        .someData("something")
-                        .build()))
-                .build())
+        MutableHttpRequest<Request> request = HttpRequest.POST("/v1.0/xml/request",
+                theRequest)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
         Response response = client.toBlocking().retrieve(request, Response.class);
         assertEquals(0, response.getErrorCode());
     }
 
+    @Test
+    void doBasicXmlRequestWorkAround() throws JsonProcessingException {
+        // Create our own XMLMapper, this will use reflection!
+        XmlMapper xmlMapper = new XmlMapper();
+        // Create a string version of the request
+        final String xml = xmlMapper.writeValueAsString(theRequest);
+        MutableHttpRequest<String> request = HttpRequest.POST("/v1.0/xml/request", xml)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML);
+        Response response = client.toBlocking().retrieve(request, Response.class);
+        assertEquals(0, response.getErrorCode());
+    }
 }
