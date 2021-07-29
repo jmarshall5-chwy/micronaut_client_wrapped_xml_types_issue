@@ -13,12 +13,12 @@ import lombok.extern.slf4j.Slf4j;
 import javax.validation.Valid;
 
 @Controller(value = "v1.0/xml", consumes = MediaType.APPLICATION_XML, produces = MediaType.APPLICATION_XML)
-@Validated
+//@Validated
 @Slf4j
 public class XmlController {
 
     @Post(uri = "request")
-    public Response request(final @Valid @NonNull @Body(value = "RateRequest") Request request) {
+    public Response request(final /*@Valid*/ @NonNull @Body(value = "RateRequest") Request request) {
         log.info("Request received: {}", request);
         return Response.builder().errorCode(0).build();
     }
